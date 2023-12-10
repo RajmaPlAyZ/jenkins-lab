@@ -64,3 +64,9 @@
       service:
         name: jenkins
         state: restarted
+        
+    - name: Copy Jenkins password file
+      command: "cp /var/lib/jenkins/secrets/initialAdminPassword /home/ubuntu/Jpassword.txt"
+      args:
+        creates: /home/ubuntu/Jpassword.txt
+      become: true
