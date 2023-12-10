@@ -1,39 +1,41 @@
----
 - hosts: localhost
   become: true
   gather_facts: false
   tasks:
-    - name: Update yum packages
-      yum:
-        name: "*"
-        state: latest
+    - name: Update apt packages
+      apt:
+        update_cache: yes
       vars:
-        ansible_pkg_mgr: yum
+        ansible_pkg_mgr: apt
 
     - name: Add Jenkins to repo
       get_url:
-        url: https://pkg.jenkins.io/redhat-stable/jenkins.repo
-        dest: /etc/yum.repos.d/jenkins.repo
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io.key
+        dest: /tmp/jenkins.io.key
 
     - name: Download Jenkins key
-      shell: sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+      apt_key:
+        keyserver: keyserver.ubuntu.com
+        id: "{{ lookup('file', '/tmp/jenkins.io.key') }}"
+
+    - name: Add Jenkins repository
+      apt_repository:
+        repo: "deb http://pkg.jenkins.io/debian-stable binary/"
+        state: present
 
     - name: Install JDK
-      yum:
-        name: java-11-openjdk
+      apt:
+        name: openjdk-11-jdk
         state: present
 
     - name: Install Jenkins
-      yum:
+      apt:
         name: jenkins
         state: present
 
-    - name: Upgrade yum
-      shell: yum upgrade -y
-
-    - name: Install Docker and yum-utils
-      yum:
-        name: ['docker', 'yum-utils']
+    - name: Install Docker and docker-compose
+      apt:
+        name: ['docker.io', 'docker-compose']
         state: present
 
     - name: Enable Jenkins service
@@ -50,11 +52,11 @@
       command: cp /tmp/90-cloud-init-users /etc/sudoers.d/90-cloud-init-users
 
     - name: Copy Jenkins password file
-      command: sudo cat /var/lib/jenkins/secrets/initialAdminPassword > /home/ec2-user/Jpassword.txt
+      shell: sudo cat /var/lib/jenkins/secrets/initialAdminPassword > /home/ubuntu/Jpassword.txt
 
-    - name: Add Jenkins user to Docker group
+    - name: Add Ubuntu user to Docker group
       user:
-        name: jenkins
+        name: ubuntu  # Change to the appropriate Ubuntu user
         groups: docker
         append: yes
 
