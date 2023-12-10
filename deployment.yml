@@ -33,10 +33,20 @@
         state: started
         enabled: yes
 
+    - name: Create /etc/sudoers.d/ directory
+      file:
+        path: /etc/sudoers.d/
+        state: directory
+        mode: 0755
+      become: true
+
     - name: Add Jenkins to sudoers
       lineinfile:
         path: /etc/sudoers.d/jenkins
         line: "jenkins ALL=(ALL) NOPASSWD:ALL"
+        create: yes
+      become: true
+
 
     - name: Copy Jenkins password file
       command: "cp /var/lib/jenkins/secrets/initialAdminPassword /home/ubuntu/Jpassword.txt"
