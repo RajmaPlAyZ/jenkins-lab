@@ -8,15 +8,10 @@
       vars:
         ansible_pkg_mgr: apt
 
-    - name: Add Jenkins to repo
-      get_url:
-        url: https://pkg.jenkins.io/debian-stable/jenkins.io.key
-        dest: /tmp/jenkins.io.key
-
-    - name: Download Jenkins key
+    - name: Add Jenkins GPG key
       apt_key:
-        keyserver: keyserver.ubuntu.com
-        id: "{{ lookup('file', '/tmp/jenkins.io.key') }}"
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io.key
+        state: present
 
     - name: Add Jenkins repository
       apt_repository:
@@ -32,6 +27,11 @@
       apt:
         name: jenkins
         state: present
+
+    - name: Upgrade apt packages
+      apt:
+        upgrade: yes
+        update_cache: yes
 
     - name: Install Docker and docker-compose
       apt:
