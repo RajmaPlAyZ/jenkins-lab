@@ -1,80 +1,54 @@
-# latest
-- hosts: localhost
+---
+- name: Install Jenkins on Ubuntu
+  hosts: localhost
   become: true
-  gather_facts: false
-  tasks:
-    # Update apt packages
-    - name: Update apt packages
-      apt:
-        update_cache: yes
-      vars:
-        ansible_pkg_mgr: apt
 
-    # Add Jenkins GPG key
-    - name: Add Jenkins GPG key
+  tasks:
+    - name: Add Jenkins APT key
       apt_key:
         url: https://pkg.jenkins.io/debian-stable/jenkins.io.key
-        state: present
-        validate_certs: no
 
-    # Add Jenkins repository
-    - name: Add Jenkins repository
+    - name: Add Jenkins APT repository
       apt_repository:
-        repo: "deb http://pkg.jenkins.io/debian-stable binary/"
+        repo: deb http://pkg.jenkins.io/debian-stable binary/
         state: present
 
-    # Install JDK
-    - name: Install JDK
+    - name: Update APT package cache
+      apt:
+        update_cache: yes
+
+    - name: Install Java
       apt:
         name: openjdk-11-jdk
         state: present
 
-    # Install Jenkins
     - name: Install Jenkins
       apt:
         name: jenkins
         state: present
 
-    # Upgrade apt packages
-    - name: Upgrade apt packages
-      apt:
-        upgrade: yes
-        update_cache: yes
-
-    # Install Docker and docker-compose
-    - name: Install Docker and docker-compose
-      apt:
-        name: ['docker.io', 'docker-compose']
-        state: present
-
-    # Enable Jenkins service
-    - name: Enable Jenkins service
+    - name: Start Jenkins service
       service:
         name: jenkins
         state: started
+        enabled: yes
 
-    # Add Jenkins to sudoers
     - name: Add Jenkins to sudoers
       lineinfile:
-        path: /etc/sudoers.d/90-cloud-init-users
+        path: /etc/sudoers.d/jenkins
         line: "jenkins ALL=(ALL) NOPASSWD:ALL"
 
-    # Copy sudo file back
-    - name: Copy sudo file back
-      command: cp /tmp/90-cloud-init-users /etc/sudoers.d/90-cloud-init-users
-
-    # Copy Jenkins password file
     - name: Copy Jenkins password file
-      shell: sudo cat /var/lib/jenkins/secrets/initialAdminPassword > /home/ubuntu/Jpassword.txt
+      command: "cp /var/lib/jenkins/secrets/initialAdminPassword /home/ubuntu/Jpassword.txt"
+      args:
+        creates: /home/ubuntu/Jpassword.txt
 
-    # Add Ubuntu user to Docker group
     - name: Add Ubuntu user to Docker group
       user:
-        name: ubuntu  # Change to the appropriate Ubuntu user
+        name: ubuntu
         groups: docker
         append: yes
 
-    # Restart Jenkins service
     - name: Restart Jenkins service
       service:
         name: jenkins
